@@ -1,0 +1,136 @@
+name: iOS Release Build
+
+on:
+  push:
+    branches: [ main, 'release/**' ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  FLUTTER_VERSION: '3.19.0'
+  XCODE_VERSION: '15.2'
+
+jobs:
+  build-ios:
+    name: Build iOS Release
+    runs-on: macos-14
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Select Xcode version
+        run: sudo xcode-select -switch /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+      
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Run code generation
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      
+      - name: Setup Firebase GoogleService-Info.plist
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}" | base64 --decode > ios/Runner/GoogleService-Info.plist
+      
+      - name: Create environment file
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ] || [ "${{ github.ref_type }}" = "tag" ]; then
+            cp .env.prod .env
+          else
+            cp .env.staging .env
+          fi
+      
+      - name: Import Code Signing Certificates
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
+          p12-password: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
+      
+      - name: Download Provisioning Profile
+        uses: apple-actions/download-provisioning-profiles@v3
+        with:
+          bundle-id: com.streamx.app
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+      
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+      
+      - name: Build iOS IPA
+        run: |
+          flutter build ipa --release \
+            --dart-define-from-file=.env \
+            --obfuscate \
+            --split-debug-info=build/debug-symbols \
+            --export-options-plist=ios/ExportOptions.plist
+      
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa-${{ github.sha }}
+          path: build/ios/ipa/*.ipa
+          retention-days: 30
+      
+      - name: Upload to TestFlight (Staging)
+        if: github.event.inputs.environment != 'production'
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: build/ios/ipa/streamx.ipa
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+      
+      - name: Upload to App Store (Production)
+        if: github.event.inputs.environment == 'production' || github.ref_type == 'tag'
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: build/ios/ipa/streamx.ipa
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+      
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/ios/ipa/*.ipa
+          generate_release_notes: true
