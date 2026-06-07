@@ -1,0 +1,8 @@
+# This file keeps the animations/ directory in git
+# Add Lottie JSON animations here:
+# - splash_animation.json
+# - loading_animation.json
+# - empty_state.json
+# - success_animation.json
+# - error_animation.json
+# - video_loading.json
