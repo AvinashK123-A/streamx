@@ -1,0 +1,156 @@
+name: Web Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [ main, 'release/**' ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  FLUTTER_VERSION: '3.19.0'
+
+jobs:
+  build-web:
+    name: Build Web App
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Run code generation
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      
+      - name: Create environment file
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ] || [ "${{ github.ref_type }}" = "tag" ]; then
+            cp .env.prod .env
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            cp .env.staging .env
+          else
+            cp .env.staging .env
+          fi
+      
+      - name: Build Web (Production optimized)
+        run: |
+          flutter build web --release \
+            --dart-define-from-file=.env \
+            --web-renderer canvaskit \
+            --pwa-strategy offline-first \
+            --source-maps \
+            --tree-shake-icons
+      
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: build/web/
+          retention-days: 7
+      
+  deploy-preview:
+    name: Deploy Preview (PR)
+    needs: build-web
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: build/web/
+      
+      - name: Deploy to Firebase Hosting Preview Channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          projectId: ${{ secrets.PROD_FIREBASE_PROJECT_ID }}
+          target: streamx-web
+          channelId: pr-${{ github.event.number }}
+          expires: 7d
+  
+  deploy-staging:
+    name: Deploy Staging
+    needs: build-web
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    environment: staging
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: build/web/
+      
+      - name: Deploy to Firebase Hosting (Staging)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGING_JSON }}
+          projectId: ${{ secrets.STAGING_FIREBASE_PROJECT_ID }}
+          target: streamx-web-staging
+          channelId: live
+  
+  deploy-production:
+    name: Deploy Production
+    needs: build-web
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ github.sha }}
+          path: build/web/
+      
+      - name: Deploy to Firebase Hosting (Production)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          projectId: ${{ secrets.PROD_FIREBASE_PROJECT_ID }}
+          target: streamx-web
+          channelId: live
