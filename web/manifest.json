@@ -1,0 +1,84 @@
+{
+  "name": "StreamX - Video Streaming",
+  "short_name": "StreamX",
+  "description": "Netflix-style video streaming app built with Flutter. Watch your favorite content anytime, anywhere.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#141414",
+  "theme_color": "#E50914",
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "categories": ["entertainment", "multimedia"],
+  "screenshots": [
+    {
+      "src": "icons/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "StreamX Home Screen"
+    },
+    {
+      "src": "icons/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "StreamX on Desktop"
+    }
+  ],
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/Icon-32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/Icon-16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.streamx.app",
+      "id": "com.streamx.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/streamx/id000000000"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search Videos",
+      "short_name": "Search",
+      "description": "Search for your favorite videos",
+      "url": "/search",
+      "icons": [{ "src": "icons/Icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Profile",
+      "short_name": "Profile",
+      "description": "View your profile and watch history",
+      "url": "/profile",
+      "icons": [{ "src": "icons/Icon-96.png", "sizes": "96x96" }]
+    }
+  ]
+}
