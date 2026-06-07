@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Push Notifications -->
+    <key>aps-environment</key>
+    <string>production</string>
+    
+    <!-- Associated Domains for Universal Links -->
+    <key>com.apple.developer.associated-domains</key>
+    <array>
+        <string>applinks:streamx.app</string>
+        <string>webcredentials:streamx.app</string>
+    </array>
+    
+    <!-- Keychain Sharing for secure token storage -->
+    <key>keychain-access-groups</key>
+    <array>
+        <string>$(AppIdentifierPrefix)com.streamx.app</string>
+    </array>
+    
+    <!-- Background Audio (for PiP and background playback) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+</dict>
+</plist>
