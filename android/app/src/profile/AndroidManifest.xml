@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Profile manifest — same as release but with profiling enabled -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Profile builds are used for performance profiling in release mode -->
+    <!-- No additional permissions needed beyond the main manifest -->
+</manifest>
