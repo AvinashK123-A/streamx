@@ -24,7 +24,7 @@ class EmptyStateWidget extends StatelessWidget {
   }) {
     return EmptyStateWidget(
       title: 'No Results Found',
-      message: 'We couldn't find anything for "\$query". Try different keywords.',
+      message: 'We couldn\'t find anything for "$query". Try different keywords.',
       icon: Icons.search_off_rounded,
     );
   }
@@ -58,7 +58,7 @@ class EmptyStateWidget extends StatelessWidget {
   /// Factory for offline state
   factory EmptyStateWidget.offline({VoidCallback? onRetry}) {
     return EmptyStateWidget(
-      title: 'You're Offline',
+      title: 'You\'re Offline',
       message: 'Connect to the internet to stream videos.',
       icon: Icons.wifi_off_rounded,
       action: onRetry != null

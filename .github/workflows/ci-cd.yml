@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  FLUTTER_VERSION: '3.19.0'
+  FLUTTER_VERSION: '3.24.5'
 
 jobs:
   # ============ Code Quality ============
@@ -29,7 +29,7 @@ jobs:
         run: flutter pub get
 
       - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Analyze code
         run: flutter analyze --fatal-infos --fatal-warnings
@@ -57,7 +57,7 @@ jobs:
         run: flutter pub get
 
       - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Run unit tests
         run: flutter test --coverage --reporter=github
@@ -105,7 +105,7 @@ jobs:
         run: flutter pub get
 
       - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build APK (Debug)
         run: flutter build apk --debug --build-name=1.0.0 --build-number=${{ github.run_number }}
@@ -153,7 +153,7 @@ jobs:
         run: flutter pub get
 
       - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build iOS (no code sign)
         run: flutter build ios --release --no-codesign --build-name=1.0.0 --build-number=${{ github.run_number }}
@@ -185,7 +185,7 @@ jobs:
         run: flutter pub get
 
       - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build Web
         run: flutter build web --release --web-renderer=canvaskit
