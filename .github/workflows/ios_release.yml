@@ -17,7 +17,7 @@ on:
           - production
 
 env:
-  FLUTTER_VERSION: '3.19.0'
+  FLUTTER_VERSION: '3.24.5'
   XCODE_VERSION: '15.2'
 
 jobs:
@@ -62,7 +62,7 @@ jobs:
         run: flutter pub get
       
       - name: Run code generation
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
       
       - name: Setup Firebase GoogleService-Info.plist
         run: |
